@@ -5,7 +5,7 @@ Allows profile to be activated using an expression language expression. Currentl
 Extension hijacks property activation and tries to evaluate mvel expression first, if this is not successful
 it passes control to original property activator.
 
-In order to activate extension, you cannot include it into <build><extensions>, because profile activation is done
+In order to activate extension, you cannot include it into ```<build><extensions>``` element, because profile activation is done
 before it would be activated. So you need to copy following files into *$MAVEN_HOME/lib/ext*:
 
 * el-profile-activator-extension.jar (available in target directory)
