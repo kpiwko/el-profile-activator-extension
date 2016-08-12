@@ -16,9 +16,6 @@
  */
 package com.redhat.jboss.maven.elprofile;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.ActivationProperty;
 import org.apache.maven.model.Profile;
@@ -31,6 +28,9 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.mvel2.CompileException;
 import org.mvel2.MVEL;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Alternative implementation of PropertyActivator for Maven 3
@@ -71,6 +71,10 @@ public class ElProfileActivator implements ProfileActivator {
 
         // call original implementation if mvel script was not valid/false
         return result ? true : new PropertyProfileActivator().isActive(profile, context, problemCollector);
+    }
+
+    public boolean presentInConfig(Profile profile, ProfileActivationContext context, ModelProblemCollector problemCollector) {
+        return new PropertyProfileActivator().presentInConfig(profile, context, problemCollector);
     }
 
     private boolean evaluateMvel(String expression, ProfileActivationContext context, ModelProblemCollector problemCollector) {
