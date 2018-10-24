@@ -24,7 +24,24 @@ To profit from new activation, add following in your pom.xml:
             </property>
         </activation>
     </profile>            
+
+Since not all property names are valid MVEL identifiers (e.g., an
+identifier cannot contain a dot), an identifier for the properties
+map can be specified with the special `mvel` property name as
+`mvel(<properties-map-identifier>)`.  For example:
+
+    <profile>
+        <id>my-profile</id>
     
+        <activation>
+            <property>
+                <!-- mvel property name is obligatory; identifier p is properties map -->
+                <name>mvel(p)</name>
+                <value>isdef foo.env &amp;&amp; p["foo.env"]=="abc"</value>
+            </property>
+        </activation>
+    </profile>
+
 A few examples (an MVEL cheatsheet)
 -----------------------------------
 
@@ -39,5 +56,9 @@ A few examples (an MVEL cheatsheet)
 * Check if *foo* starts with *abc* or *baz* contains *xyz*
 	
 		isdef foo &amp;&amp; foo.startsWith("abc")) || (isdef baz &amp;&amp; baz.contains("xyz"))
+
+* Check if *foo.env* equals *test* by accessing properties via *p* identifier specified in *name* element as *mvel(p)*
+	
+		isdef foo.env &amp;&amp; p["foo.env"] == "test"
 
 Complete MVEL reference guide is available at http://mvel.codehaus.org/Language+Guide+for+2.0		
