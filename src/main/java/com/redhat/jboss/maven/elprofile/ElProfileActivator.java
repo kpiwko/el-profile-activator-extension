@@ -29,8 +29,14 @@ import org.codehaus.plexus.logging.Logger;
 import org.mvel2.CompileException;
 import org.mvel2.MVEL;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Alternative implementation of PropertyActivator for Maven 3
@@ -41,7 +47,8 @@ import java.util.Map;
 @Component(role = ProfileActivator.class, hint = "property")
 public class ElProfileActivator implements ProfileActivator {
 
-    private static final String MVEL_SCRIPT_PROPERTY_NAME = "mvel";
+    private static final Pattern COMMA_PAT = Pattern.compile(",");
+    private static final Pattern MVEL_SCRIPT_PROPERTY_NAME_PAT = Pattern.compile("^mvel(?:\\(([^\\)]*+)\\))?+$");
 
     @Requirement
     private Logger logger;
@@ -60,10 +67,17 @@ public class ElProfileActivator implements ProfileActivator {
             {
                 String name = property.getName();
 
-                if (name != null && MVEL_SCRIPT_PROPERTY_NAME.equals(name)) {
+                Matcher matcher = MVEL_SCRIPT_PROPERTY_NAME_PAT.matcher((name == null) ? "" : name);
+                if (matcher.matches()) {
+                    List<String> parameters = Collections.<String>emptyList();
+                    String parametersString = matcher.group(1);
+                    parametersString = (parametersString == null) ? "" : parametersString.trim();
+                    if (!parametersString.isEmpty()) {
+                        parameters = Arrays.asList(COMMA_PAT.split(parametersString, -1));
+                    }
                     String value = property.getValue();
                     logger.debug("Evaluating following MVEL expression: " + value);
-                    result = evaluateMvel(value, context, problemCollector);
+                    result = evaluateMvel(value, parameters, context, problemCollector);
                     logger.debug("Evaluated MVEL expression: " + value + " as " + result);
                 }
             }
@@ -77,17 +91,34 @@ public class ElProfileActivator implements ProfileActivator {
         return new PropertyProfileActivator().presentInConfig(profile, context, problemCollector);
     }
 
-    private boolean evaluateMvel(String expression, ProfileActivationContext context, ModelProblemCollector problemCollector) {
+    private boolean evaluateMvel(String expression, List<String> parameters, ProfileActivationContext context, ModelProblemCollector problemCollector) {
 
         if (expression == null || expression.length() == 0) {
             return false;
         }
 
+        String propertiesIdentifier = null;
+        Iterator<String> parametersIterator = parameters.iterator();
+        if (parametersIterator.hasNext()) {
+            String identifier = parametersIterator.next();
+            identifier = (identifier == null) ? "" : identifier.trim();
+            if (!identifier.isEmpty()) {
+                propertiesIdentifier = identifier;
+            }
+        }
+
         try {
             // "casting" to <String,Object> and including both user and system properties
-            Map<String, Object> externalVariables = new HashMap<String, Object>();
-            externalVariables.putAll(context.getSystemProperties());
-            externalVariables.putAll(context.getUserProperties());
+            Map<String, Object> properties = new HashMap<String, Object>();
+            properties.putAll(context.getSystemProperties());
+            properties.putAll(context.getUserProperties());
+            Map<String, Object> externalVariables = properties;
+            if (propertiesIdentifier != null) {
+                externalVariables = new HashMap<String, Object>();
+                externalVariables.putAll(properties);
+                // including properties map as specified identifier
+                externalVariables.put(propertiesIdentifier, properties);
+            }
 
             return MVEL.evalToBoolean(expression, externalVariables);
         } catch (NullPointerException e) {
