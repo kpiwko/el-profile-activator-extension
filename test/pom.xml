@@ -85,7 +85,7 @@
             </build>
         </profile>
         <profile>
-            <id>foo starts with abc and baz contains xyz</id>
+            <id>foo starts with abc or baz contains xyz</id>
             <activation>
                 <property>
                     <name>mvel</name>
@@ -103,8 +103,8 @@
                                 <id>foo starts with abc or baz contains xyz</id>
                                 <phase>validate</phase>
                                 <configuration>
-                                    <target name="foo-starts-with-abc-and-baz-contains-xyz">
-                                        <echo>foo starts with abc and baz contains xyz</echo>
+                                    <target name="foo-starts-with-abc-or-baz-contains-xyz">
+                                        <echo>foo starts with abc or baz contains xyz</echo>
                                     </target>
                                 </configuration>
                                 <goals>
