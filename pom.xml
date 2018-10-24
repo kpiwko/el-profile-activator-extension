@@ -5,6 +5,9 @@
     <artifactId>el-profile-activator-extension</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>El Profile Activator Maven Extension</name>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
