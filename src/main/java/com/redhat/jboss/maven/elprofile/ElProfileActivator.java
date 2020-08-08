@@ -46,6 +46,8 @@ public class ElProfileActivator implements ProfileActivator {
     @Requirement
     private Logger logger;
 
+    private PropertyProfileActivator propertyProfileActivator = new PropertyProfileActivator();
+
     public boolean isActive(Profile profile, ProfileActivationContext context, ModelProblemCollector problemCollector) {
 
         Activation activation = profile.getActivation();
@@ -60,7 +62,7 @@ public class ElProfileActivator implements ProfileActivator {
             {
                 String name = property.getName();
 
-                if (name != null && MVEL_SCRIPT_PROPERTY_NAME.equals(name)) {
+                if (MVEL_SCRIPT_PROPERTY_NAME.equals(name)) {
                     String value = property.getValue();
                     logger.debug("Evaluating following MVEL expression: " + value);
                     result = evaluateMvel(value, context, problemCollector);
@@ -70,11 +72,11 @@ public class ElProfileActivator implements ProfileActivator {
         }
 
         // call original implementation if mvel script was not valid/false
-        return result ? true : new PropertyProfileActivator().isActive(profile, context, problemCollector);
+        return result || propertyProfileActivator.isActive(profile, context, problemCollector);
     }
 
     public boolean presentInConfig(Profile profile, ProfileActivationContext context, ModelProblemCollector problemCollector) {
-        return new PropertyProfileActivator().presentInConfig(profile, context, problemCollector);
+        return propertyProfileActivator.presentInConfig(profile, context, problemCollector);
     }
 
     private boolean evaluateMvel(String expression, ProfileActivationContext context, ModelProblemCollector problemCollector) {
@@ -87,6 +89,7 @@ public class ElProfileActivator implements ProfileActivator {
             // "casting" to <String,Object> and including both user and system properties
             Map<String, Object> externalVariables = new HashMap<String, Object>();
             externalVariables.putAll(context.getSystemProperties());
+            externalVariables.putAll(context.getProjectProperties());
             externalVariables.putAll(context.getUserProperties());
 
             return MVEL.evalToBoolean(expression, externalVariables);

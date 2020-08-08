@@ -1,10 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.redhat.jboss.maven</groupId>
     <artifactId>el-profile-activator-extension</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.1</version>
     <name>El Profile Activator Maven Extension</name>
+    <properties>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -28,7 +32,7 @@
             <plugin>
                 <groupId>org.codehaus.plexus</groupId>
                 <artifactId>plexus-component-metadata</artifactId>
-                <version>1.5.5</version>
+                <version>2.1.0</version>
                 <executions>
                     <execution>
                         <goals>
