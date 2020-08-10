@@ -16,8 +16,12 @@
  */
 package com.redhat.jboss.maven.elprofile;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Properties;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.ActivationProperty;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.building.ModelProblemCollector;
 import org.apache.maven.model.profile.ProfileActivationContext;
@@ -46,6 +50,8 @@ public class ElProfileActivator implements ProfileActivator {
     @Requirement
     private Logger logger;
 
+    private PropertyProfileActivator propertyProfileActivator = new PropertyProfileActivator();
+
     public boolean isActive(Profile profile, ProfileActivationContext context, ModelProblemCollector problemCollector) {
 
         Activation activation = profile.getActivation();
@@ -60,7 +66,7 @@ public class ElProfileActivator implements ProfileActivator {
             {
                 String name = property.getName();
 
-                if (name != null && MVEL_SCRIPT_PROPERTY_NAME.equals(name)) {
+                if (MVEL_SCRIPT_PROPERTY_NAME.equals(name)) {
                     String value = property.getValue();
                     logger.debug("Evaluating following MVEL expression: " + value);
                     result = evaluateMvel(value, context, problemCollector);
@@ -70,11 +76,11 @@ public class ElProfileActivator implements ProfileActivator {
         }
 
         // call original implementation if mvel script was not valid/false
-        return result ? true : new PropertyProfileActivator().isActive(profile, context, problemCollector);
+        return result || propertyProfileActivator.isActive(profile, context, problemCollector);
     }
 
     public boolean presentInConfig(Profile profile, ProfileActivationContext context, ModelProblemCollector problemCollector) {
-        return new PropertyProfileActivator().presentInConfig(profile, context, problemCollector);
+        return propertyProfileActivator.presentInConfig(profile, context, problemCollector);
     }
 
     private boolean evaluateMvel(String expression, ProfileActivationContext context, ModelProblemCollector problemCollector) {
@@ -84,10 +90,17 @@ public class ElProfileActivator implements ProfileActivator {
         }
 
         try {
+            Properties currentModuleProperties = getCurrentModuleProperties(problemCollector);
             // "casting" to <String,Object> and including both user and system properties
             Map<String, Object> externalVariables = new HashMap<String, Object>();
             externalVariables.putAll(context.getSystemProperties());
+            externalVariables.putAll(context.getProjectProperties());
             externalVariables.putAll(context.getUserProperties());
+            currentModuleProperties.forEach((k, v) -> {
+                if (k instanceof String) {
+                    externalVariables.put((String) k, v);
+                }
+            });
 
             return MVEL.evalToBoolean(expression, externalVariables);
         } catch (NullPointerException e) {
@@ -99,6 +112,22 @@ public class ElProfileActivator implements ProfileActivator {
             logger.debug(e.getMessage());
             return false;
         }
+    }
+
+    private Properties getCurrentModuleProperties(ModelProblemCollector problemCollector) {
+        try {
+            Object modelObj = MethodUtils.invokeMethod(problemCollector, "getRootModel");
+            if (!(modelObj instanceof Model)) {
+                return new Properties();
+            }
+
+            Model model = (Model) modelObj;
+            return model.getProperties();
+
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            logger.warn("some problems while getting root model");
+        }
+        return new Properties();
     }
 
 }
