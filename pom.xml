@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.redhat.jboss.maven</groupId>
     <artifactId>el-profile-activator-extension</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <name>El Profile Activator Maven Extension</name>
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
